@@ -30,11 +30,11 @@ dados_agrupado = dados_agrupado.reset_index()
 
 import plotly.express as px
 
-dados_agrupado["Fim da Apólice"] = dados_agrupado['Avisar Empresa']
+dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
 dados_agrupado['Apólices'] = dados_agrupado['count']
 
 
-fig = px.bar(dados_agrupado, x="Fim da Apólice", y="Apólices", color="Empresa", color_discrete_sequence=px.colors.qualitative.T10)
+fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", color="Empresa", color_discrete_sequence=px.colors.qualitative.T10)
 fig.update_xaxes(
     tickfont=dict(size=14, color='#414040'),
     tickangle=-45,   # Rotação de 45 graus (negativo fica melhor no plotly)
