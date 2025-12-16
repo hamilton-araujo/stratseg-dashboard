@@ -1,0 +1,95 @@
+import plotly.express as px
+import pandas as pd
+import requests
+import streamlit as st
+
+dados = pd.read_csv('stratseg - clientes (1).csv')
+
+st.set_page_config(layout= 'wide')
+st.title('DASHBOARD DE CLIENTES - STRATSEG')
+#filtrando para setembro
+
+dados['Avisar Empresa'] = pd.to_datetime(dados['Avisar Empresa'], format = '%d/%m/%Y')
+dados['Fim Apólice'] = pd.to_datetime(dados['Fim Apólice'], format = '%d/%m/%Y')
+
+
+st.sidebar.title('Filtros')
+with st.sidebar.expander('Empresa'):
+    empresas = st.multiselect('Selecione as empresas', dados['Empresa'].unique(), dados['Empresa'].unique())
+with st.sidebar.expander('Categoria do seguro'):
+    categoria = st.multiselect('Selecione as categorias', dados['Seguro'].unique(), dados['Seguro'].unique())
+with st.sidebar.expander('Data de contato'):
+    avisar_empresa = st.date_input('Selecione a data', (dados['Avisar Empresa'].min(), dados['Avisar Empresa'].max()))
+with st.sidebar.expander('Data de vencimento da apólice'):
+    fim_apolice = st.date_input('Selecione a data', (dados['Fim Apólice'].min(), dados['Fim Apólice'].max()))
+
+dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @avisar_empresa[0] & `Avisar Empresa` <= @avisar_empresa[1] & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
+
+
+dados_agrupado = dados.groupby("Avisar Empresa")["Empresa"].value_counts()
+dados_agrupado = dados_agrupado.reset_index()
+
+import plotly.express as px
+
+dados_agrupado["Fim da Apólice"] = dados_agrupado['Avisar Empresa']
+dados_agrupado['Apólices'] = dados_agrupado['count']
+
+
+fig = px.bar(dados_agrupado, x="Fim da Apólice", y="Apólices", color="Empresa", color_discrete_sequence=px.colors.qualitative.T10)
+fig.update_xaxes(
+    tickfont=dict(size=14, color='#414040'),
+    tickangle=-45,   # Rotação de 45 graus (negativo fica melhor no plotly)
+    showgrid=False,  # Remove grid vertical
+          # Equivalente ao MultipleLocator(1) se forem datas (1 ano)
+                     # Se forem números inteiros (anos), use dtick=1
+)
+
+
+
+
+aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
+with aba1:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(label='Total de Clientes para Contato', value=dados_agrupado['Empresa'].nunique())
+        for i in range(dados_agrupado['Empresa'].nunique()):
+            empresa_atual = dados_agrupado['Empresa'].unique()[i]
+            total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
+            st.write(f'Empresa: {empresa_atual} - Total de Apólices: {total_apolices}')
+    with col2:
+        st.metric(label='Total de Apólices para Contato', value=dados_agrupado.shape[0])
+        for i in range(dados_agrupado['Empresa'].nunique()):
+            empresa_atual = dados_agrupado['Empresa'].unique()[i]
+            total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
+            st.write(f'Empresa: {empresa_atual} - Total de Apólices: {total_apolices}')
+
+
+    st.plotly_chart(fig, use_container_width=True)
+
+with aba2:
+    st.write("Clientes que estão em negociação")
+    col1, col2, col3 = st.columns([2, 1, 1]) # Larguras relativas: 1, 2, 1
+
+    with col2:
+        st.metric(label='Cliente', value = 'CIMED')
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(label='Apólice', value='9600131570 (Endosso nº 123990)')
+        st.metric(label='Matriz de Riscos', value='Link')
+        st.metric(label='Contato', value='João Silva - (41) 99999-9999')
+    with col2:
+        st.metric(label='Tipo de Seguro', value='Seguro Empresarial')
+        st.metric(label='Etapa do processo de apresentação', value='Montando PowerPoint')
+        st.metric(label='Etapa do processo de negociação', value='Aguardando retorno do cliente')
+    with col3:
+        st.metric(label='Data de Aviso', value='15/09/2024')
+        st.metric(label='Apresentação', value='Link')
+        st.metric(label='Corretora Atual', value='WILLIS CORRETORES DE SEGUROS LTDA')
+
+with aba3:
+    st.write("Visão Geral dos Clientes")
+    with st.expander('Colunas'):
+        colunas = st.multiselect('Selecione as colunas', list(dados.columns), list(dados.columns))
+
+    st.dataframe(dados[colunas], use_container_width=True)
