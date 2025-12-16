@@ -34,13 +34,21 @@ dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
 dados_agrupado['Apólices'] = dados_agrupado['count']
 dados_agrupado['Fim Apólice'] = dados_agrupado['Fim Apólice'].dt.strftime('%d/%m/%Y')
 
-fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", hover_data=['Fim Apólice'], color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices"}, title="Número de Apólices por Data de Aviso e Empresa")
+fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", hover_data=['Fim Apólice'], color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices", "Fim Apólice": "Data de Fim da Apólice"}, title="Número de Apólices por Data de Aviso e Empresa")
 fig.update_xaxes(
     tickfont=dict(size=14, color='#414040'),
     tickangle=-45,   # Rotação de 45 graus (negativo fica melhor no plotly)
     showgrid=False,  # Remove grid vertical
           # Equivalente ao MultipleLocator(1) se forem datas (1 ano)
                      # Se forem números inteiros (anos), use dtick=1
+)
+fig.update_layout(
+    hoverlabel=dict(
+        bgcolor="white",    # Cor de fundo
+        font_size=16,       # Tamanho da letra
+        font_family="Rockwell", # Tipo da fonte
+        bordercolor="black" # Cor da borda
+    )
 )
 
 
