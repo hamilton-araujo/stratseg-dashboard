@@ -34,7 +34,7 @@ dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
 dados_agrupado['Apólices'] = dados_agrupado['count']
 
 
-fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels="Fim Apólice")
+fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", hover_data=['Fim Apólice'], color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices"}, title="Número de Apólices por Data de Aviso e Empresa")
 fig.update_xaxes(
     tickfont=dict(size=14, color='#414040'),
     tickangle=-45,   # Rotação de 45 graus (negativo fica melhor no plotly)
