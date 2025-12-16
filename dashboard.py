@@ -78,23 +78,51 @@ fig.update_layout(
 
 aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
 with aba1:
+    # 1. Identificando as empresas únicas e calculando a divisão
+    empresas_unicas = dados_agrupado['Empresa'].unique()
+    qtd_empresas = len(empresas_unicas)
+    
+    # O cálculo (qtd + 1) // 2 garante que se for ímpar (ex: 5), a col1 fica com 3 e col2 com 2.
+    meio = (qtd_empresas + 1) // 2 
+    
+    lista_empresas_col1 = empresas_unicas[:meio]
+    lista_empresas_col2 = empresas_unicas[meio:]
+
     col1, col2 = st.columns(2)
+
+    # --- COLUNA 1 ---
     with col1:
-        st.metric(label='Total de Clientes para Contato', value=dados_agrupado['Empresa'].nunique())
-        for i in range(dados_agrupado['Empresa'].nunique()):
-            empresa_atual = dados_agrupado['Empresa'].unique()[i]
+        # Mantive sua métrica original, mas talvez você queira ajustar o texto
+        st.metric(label='Total de Clientes (Lado A)', value=len(lista_empresas_col1))
+        
+        st.write("---") # Uma linha separadora visual
+        
+        for empresa_atual in lista_empresas_col1:
+            # Filtra apenas para pegar o total daquela empresa específica
             total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
-            st.write(f'Empresa: {empresa_atual} - Total de Apólices: {total_apolices}')
+            
+            # Usei markdown (**) para destacar o nome da empresa
+            st.write(f'🏢 **{empresa_atual}**') 
+            st.write(f'Apólices: {total_apolices}')
+            st.write("") # Espaço vazio entre empresas
+
+    # --- COLUNA 2 ---
     with col2:
-        st.metric(label='Total de Apólices para Contato', value=dados_agrupado.shape[0])
-        for i in range(dados_agrupado['Empresa'].nunique()):
-            empresa_atual = dados_agrupado['Empresa'].unique()[i]
+        st.metric(label='Total de Clientes (Lado B)', value=len(lista_empresas_col2))
+        
+        st.write("---")
+        
+        for empresa_atual in lista_empresas_col2:
             total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
-            st.write(f'Empresa: {empresa_atual} - Total de Apólices: {total_apolices}')
+            
+            st.write(f'🏢 **{empresa_atual}**')
+            st.write(f'Apólices: {total_apolices}')
+            st.write("")
 
-
+    # O gráfico continua aparecendo abaixo das colunas
+    st.markdown("---")
     st.plotly_chart(fig, use_container_width=True)
-
+    
 with aba2:
     st.write("Clientes que estão em negociação")
     col1, col2, col3 = st.columns([1.5, 1, 1]) # Larguras relativas: 1, 2, 1
