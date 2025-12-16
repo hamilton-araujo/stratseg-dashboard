@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import streamlit as st
 
-dados = pd.read_csv('stratseg - clientes (1).csv')
+dados = pd.read_csv('stratseg - clientes.csv')
 
 st.set_page_config(layout= 'wide')
 st.title('DASHBOARD DE CLIENTES - STRATSEG')
