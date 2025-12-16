@@ -25,7 +25,7 @@ with st.sidebar.expander('Data de vencimento da apólice'):
 dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @avisar_empresa[0] & `Avisar Empresa` <= @avisar_empresa[1] & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
 
 
-dados_agrupado = dados.groupby("Avisar Empresa")["Empresa"].value_counts()
+dados_agrupado = dados.groupby("Avisar Empresa")[["Empresa", 'Fim Apólice']].value_counts()
 dados_agrupado = dados_agrupado.reset_index()
 
 import plotly.express as px
@@ -34,7 +34,7 @@ dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
 dados_agrupado['Apólices'] = dados_agrupado['count']
 
 
-fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", color="Empresa", color_discrete_sequence=px.colors.qualitative.T10)
+fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels="Fim Apólice")
 fig.update_xaxes(
     tickfont=dict(size=14, color='#414040'),
     tickangle=-45,   # Rotação de 45 graus (negativo fica melhor no plotly)
