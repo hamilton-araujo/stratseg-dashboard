@@ -1,29 +1,51 @@
 import pandas as pd
 import requests
 import streamlit as st
+from datetime import datetime # Importação necessária para garantir compatibilidade
 
 dados = pd.read_csv('stratseg - clientes.csv')
 
 st.set_page_config(layout= 'wide')
 st.title('DASHBOARD DE CLIENTES - STRATSEG')
-#filtrando para setembro
 
+# Tratamento de datas
 dados['Avisar Empresa'] = pd.to_datetime(dados['Avisar Empresa'], format = '%d/%m/%Y')
 dados['Fim Apólice'] = pd.to_datetime(dados['Fim Apólice'], format = '%d/%m/%Y')
 
+# --- NOVO BLOCO: Lógica para pegar o Mês Atual ---
+hoje = pd.Timestamp.now()
+data_inicio = hoje.replace(day=1) 
+# O MonthEnd(0) joga para o último dia do mês atual
+data_fim = hoje + pd.offsets.MonthEnd(0) 
+# -----------------------------------------------
 
 st.sidebar.title('Filtros')
 with st.sidebar.expander('Empresa'):
     empresas = st.multiselect('Selecione as empresas', dados['Empresa'].unique(), dados['Empresa'].unique())
 with st.sidebar.expander('Categoria do seguro'):
     categoria = st.multiselect('Selecione as categorias', dados['Seguro'].unique(), dados['Seguro'].unique())
+
 with st.sidebar.expander('Data de contato'):
-    avisar_empresa = st.date_input('Selecione a data', (dados['Avisar Empresa'].min(), dados['Avisar Empresa'].max()))
+    # AQUI ESTÁ A MUDANÇA
+    # O parâmetro 'value' define o valor inicial. Passamos uma tupla (inicio, fim)
+    avisar_empresa = st.date_input(
+        'Selecione a data', 
+        value=(data_inicio.date(), data_fim.date()), 
+        format="DD/MM/YYYY" # Formato brasileiro visual
+    )
+
 with st.sidebar.expander('Data de vencimento da apólice'):
     fim_apolice = st.date_input('Selecione a data', (dados['Fim Apólice'].min(), dados['Fim Apólice'].max()))
 
-dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @avisar_empresa[0] & `Avisar Empresa` <= @avisar_empresa[1] & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
+# Verificação de segurança antes do query
+if len(avisar_empresa) == 2:
+    start_date, end_date = avisar_empresa
+    dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @start_date & `Avisar Empresa` <= @end_date & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
+else:
+    st.warning("Por favor, selecione uma data final para o filtro de contato.")
+    st.stop() # Para a execução até o usuário selecionar a data
 
+dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @avisar_empresa[0] & `Avisar Empresa` <= @avisar_empresa[1] & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
 
 dados_agrupado = dados.groupby("Avisar Empresa")[["Empresa", 'Fim Apólice']].value_counts()
 dados_agrupado = dados_agrupado.reset_index()
