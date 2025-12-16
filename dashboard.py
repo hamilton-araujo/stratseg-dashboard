@@ -93,7 +93,7 @@ with aba1:
     # --- COLUNA 1 ---
     with col1:
         # Mantive sua métrica original, mas talvez você queira ajustar o texto
-        st.metric(label='Total de Clientes (Lado A)', value=len(lista_empresas_col1))
+        st.metric(label='Total de Clientes', value=len(lista_empresas_col1) + len(lista_empresas_col2))
         
         st.write("---") # Uma linha separadora visual
         
@@ -108,7 +108,7 @@ with aba1:
 
     # --- COLUNA 2 ---
     with col2:
-        st.metric(label='Total de Clientes (Lado B)', value=len(lista_empresas_col2))
+        st.metric(label='Total de Apólices', value=dados_agrupado['count'].sum())
         
         st.write("---")
         
@@ -122,7 +122,7 @@ with aba1:
     # O gráfico continua aparecendo abaixo das colunas
     st.markdown("---")
     st.plotly_chart(fig, use_container_width=True)
-    
+
 with aba2:
     st.write("Clientes que estão em negociação")
     col1, col2, col3 = st.columns([1.5, 1, 1]) # Larguras relativas: 1, 2, 1
