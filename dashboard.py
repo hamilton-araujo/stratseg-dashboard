@@ -67,7 +67,7 @@ with aba1:
 
 with aba2:
     st.write("Clientes que estão em negociação")
-    col1, col2, col3 = st.columns([2, 1, 1]) # Larguras relativas: 1, 2, 1
+    col1, col2, col3 = st.columns([1.5, 1, 1]) # Larguras relativas: 1, 2, 1
 
     with col2:
         st.metric(label='Cliente', value = 'CIMED')
