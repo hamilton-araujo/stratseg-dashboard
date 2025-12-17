@@ -56,13 +56,24 @@ dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa'].dt.strftime(
 dados_agrupado['Apólices'] = dados_agrupado['count']
 dados_agrupado['Fim Apólice'] = dados_agrupado['Fim Apólice'].dt.strftime('%d/%m/%Y')
 
-fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", hover_data=['Fim Apólice'], color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices", "Fim Apólice": "Data de Fim da Apólice"}, title="Número de Apólices por Data de Aviso e Empresa")
+fig = px.bar(
+    dados_agrupado, 
+    x="Avisar Empresa", 
+    y="Apólices", 
+    hover_data={'Avisar Empresa': '|%d/%m/%Y', 'Fim Apólice': True}, # Formata a data no hover
+    color="Empresa", 
+    color_discrete_sequence=px.colors.qualitative.T10, 
+    labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices"}, 
+    title="Número de Apólices por Data de Aviso e Empresa"
+)
+
+# Forçar o eixo X a mostrar todos os dias (linear/date)
 fig.update_xaxes(
+    type='date',
+    tickformat="%d/%m/%Y", # Formato visual no eixo
     tickfont=dict(size=14, color="#000000"),
-    tickangle=-20,   # Rotação de 45 graus (negativo fica melhor no plotly)
-    showgrid=False,  # Remove grid vertical
-          # Equivalente ao MultipleLocator(1) se forem datas (1 ano)
-                     # Se forem números inteiros (anos), use dtick=1
+    tickangle=-20,
+    showgrid=True # Ajuda a visualizar os espaços vazios
 )
 fig.update_layout(
     hoverlabel=dict(
