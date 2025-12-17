@@ -91,7 +91,6 @@ fig.update_layout(
 )
 
 # --- INTERFACE STREAMLIT ---
-aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
 
 aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
 
@@ -149,7 +148,7 @@ with aba1:
 
     st.markdown("---")
     st.plotly_chart(fig, use_container_width=True)
-    
+
 with aba2:
     st.write("Clientes que estão em negociação")
     col1, col2, col3 = st.columns([1.5, 1, 1]) # Larguras relativas: 1, 2, 1
