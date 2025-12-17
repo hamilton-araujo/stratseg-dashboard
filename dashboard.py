@@ -93,35 +93,63 @@ fig.update_layout(
 # --- INTERFACE STREAMLIT ---
 aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
 
+aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
+
 with aba1:
-    empresas_unicas = dados_agrupado['Empresa'].unique()
+    # 1. Identificando as empresas únicas a partir dos dados filtrados
+    empresas_unicas = dados['Empresa'].unique()
     qtd_empresas = len(empresas_unicas)
+    
+    # Divisão para as duas colunas
     meio = (qtd_empresas + 1) // 2 
     lista_empresas_col1 = empresas_unicas[:meio]
     lista_empresas_col2 = empresas_unicas[meio:]
 
     col1, col2 = st.columns(2)
+
+    # --- COLUNA 1 ---
     with col1:
-        st.metric(label='Total de Clientes', value=len(lista_empresas_col1) + len(lista_empresas_col2))
+        st.metric(label='Total de Clientes', value=qtd_empresas)
         st.write("---")
+        
         for empresa_atual in lista_empresas_col1:
-            total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
-            st.write(f'🏢 **{empresa_atual}**') 
-            st.write(f'Apólices: {total_apolices}')
-            st.write("") 
+            # Filtramos os dados brutos para esta empresa específica
+            df_detalhe = dados[dados['Empresa'] == empresa_atual].copy()
+            total_apolices = len(df_detalhe)
+            
+            # Criamos o expander com o nome da empresa e a contagem
+            with st.expander(f"🏢 **{empresa_atual}** ({total_apolices} apólices)"):
+                # Formatamos a data para exibição na tabela
+                df_detalhe['Fim Apólice'] = df_detalhe['Fim Apólice'].dt.strftime('%d/%m/%Y')
+                
+                # Exibimos apenas as colunas solicitadas
+                st.dataframe(
+                    df_detalhe[['Apólice', 'Seguro', 'Fim Apólice']].rename(columns={'Fim Apólice': 'Vencimento'}),
+                    hide_index=True,
+                    use_container_width=True
+                )
 
+    # --- COLUNA 2 ---
     with col2:
-        st.metric(label='Total de Apólices', value=dados_agrupado['count'].sum())
+        st.metric(label='Total de Apólices', value=len(dados))
         st.write("---")
+        
         for empresa_atual in lista_empresas_col2:
-            total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
-            st.write(f'🏢 **{empresa_atual}**')
-            st.write(f'Apólices: {total_apolices}')
-            st.write("")
+            df_detalhe = dados[dados['Empresa'] == empresa_atual].copy()
+            total_apolices = len(df_detalhe)
+            
+            with st.expander(f"🏢 **{empresa_atual}** ({total_apolices} apólices)"):
+                df_detalhe['Fim Apólice'] = df_detalhe['Fim Apólice'].dt.strftime('%d/%m/%Y')
+                
+                st.dataframe(
+                    df_detalhe[['Apólice', 'Seguro', 'Fim Apólice']].rename(columns={'Fim Apólice': 'Vencimento'}),
+                    hide_index=True,
+                    use_container_width=True
+                )
 
+    # O gráfico continua aparecendo abaixo das colunas
     st.markdown("---")
     st.plotly_chart(fig, use_container_width=True)
-
 
 with aba2:
     st.write("Clientes que estão em negociação")
