@@ -1,7 +1,7 @@
 import pandas as pd
-import requests
 import streamlit as st
-from datetime import datetime # Importação necessária para garantir compatibilidade
+from datetime import datetime
+import plotly.express as px
 
 dados = pd.read_csv('stratseg - clientes.csv')
 
@@ -12,12 +12,9 @@ st.title('DASHBOARD DE CLIENTES - STRATSEG')
 dados['Avisar Empresa'] = pd.to_datetime(dados['Avisar Empresa'], format = '%d/%m/%Y')
 dados['Fim Apólice'] = pd.to_datetime(dados['Fim Apólice'], format = '%d/%m/%Y')
 
-# --- NOVO BLOCO: Lógica para pegar o Mês Atual ---
 hoje = pd.Timestamp.now()
 data_inicio = hoje.replace(day=1) 
-# O MonthEnd(0) joga para o último dia do mês atual
 data_fim = hoje + pd.offsets.MonthEnd(0) 
-# -----------------------------------------------
 
 st.sidebar.title('Filtros')
 with st.sidebar.expander('Empresa'):
@@ -26,113 +23,105 @@ with st.sidebar.expander('Categoria do seguro'):
     categoria = st.multiselect('Selecione as categorias', dados['Seguro'].unique(), dados['Seguro'].unique())
 
 with st.sidebar.expander('Data de contato'):
-    # AQUI ESTÁ A MUDANÇA
-    # O parâmetro 'value' define o valor inicial. Passamos uma tupla (inicio, fim)
     avisar_empresa = st.date_input(
         'Selecione a data', 
         value=(data_inicio.date(), data_fim.date()), 
-        format="DD/MM/YYYY" # Formato brasileiro visual
+        format="DD/MM/YYYY"
     )
 
 with st.sidebar.expander('Data de vencimento da apólice'):
     fim_apolice = st.date_input('Selecione a data', (dados['Fim Apólice'].min(), dados['Fim Apólice'].max()))
 
-# Verificação de segurança antes do query
 if len(avisar_empresa) == 2:
     start_date, end_date = avisar_empresa
     dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @start_date & `Avisar Empresa` <= @end_date & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
 else:
     st.warning("Por favor, selecione uma data final para o filtro de contato.")
-    st.stop() # Para a execução até o usuário selecionar a data
+    st.stop()
 
-dados = dados.query('Empresa == @empresas & Seguro == @categoria & `Avisar Empresa` >= @avisar_empresa[0] & `Avisar Empresa` <= @avisar_empresa[1] & `Fim Apólice` >= @fim_apolice[0] & `Fim Apólice` <= @fim_apolice[1]')
-
-dados_agrupado = dados.groupby("Avisar Empresa")[["Empresa", 'Fim Apólice']].value_counts()
-dados_agrupado = dados_agrupado.reset_index()
-
-import plotly.express as px
-
-dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
+# Agrupamento
+dados_agrupado = dados.groupby("Avisar Empresa")[["Empresa", 'Fim Apólice']].value_counts().reset_index()
 dados_agrupado['Apólices'] = dados_agrupado['count']
-dados_agrupado['Fim Apólice'] = dados_agrupado['Fim Apólice'].dt.strftime('%d/%m/%Y')
+# Formatamos a data de fim apenas para exibição no hover
+dados_agrupado['Fim_Apolice_Formatada'] = dados_agrupado['Fim Apólice'].dt.strftime('%d/%m/%Y')
+# A data de aviso deve ser formatada no template do Plotly para não quebrar o eixo X temporal
 
+# --- CONFIGURAÇÃO DO GRÁFICO ---
 fig = px.bar(
     dados_agrupado, 
     x="Avisar Empresa", 
     y="Apólices", 
-    hover_data={'Avisar Empresa': '|%d/%m/%Y', 'Fim Apólice': True}, # Formata a data no hover
     color="Empresa", 
     color_discrete_sequence=px.colors.qualitative.T10, 
-    labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices"}, 
+    labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Nº de Apólices"}, 
     title="Número de Apólices por Data de Aviso e Empresa"
 )
 
-# Forçar o eixo X a mostrar todos os dias (linear/date)
+# Customização do HOVER (Template HTML para ficar maior e mais bonito)
+fig.update_traces(
+    hovertemplate="<br>".join([
+        "<b>🏢 Empresa:</b> %{fullData.name}",
+        "<b>📅 Data de Aviso:</b> %{x|%d/%m/%Y}",
+        "<b>📊 Quantidade:</b> %{y}",
+        "<b>⌛ Vencimento:</b> %{customdata[0]}",
+        "<extra></extra>" # Remove a label secundária chata do plotly
+    ]),
+    customdata=dados_agrupado[['Fim_Apolice_Formatada']]
+)
+
 fig.update_xaxes(
     type='date',
-    tickformat="%d/%m/%Y", # Formato visual no eixo
+    tickformat="%d/%m/%Y",
     tickfont=dict(size=14, color="#000000"),
     tickangle=-20,
-    showgrid=True # Ajuda a visualizar os espaços vazios
+    showgrid=True
 )
+
 fig.update_layout(
     hoverlabel=dict(
-        bgcolor="white",    # Cor de fundo
-        font_size=16,       # Tamanho da letra
-        font_family="Rockwell", # Tipo da fonte
-        bordercolor="black" # Cor da borda
-    )
+        bgcolor="white",
+        font_size=16, # Tamanho da fonte maior
+        font_family="Arial",
+        font_color="black",
+        bordercolor="black",
+        namelength=-1 # Garante que o nome da empresa não seja cortado
+    ),
+    # Adiciona um padding (margem interna) para o hover parecer maior e mais "respirável"
+    margin=dict(l=20, r=20, t=50, b=20) 
 )
 
-
-
-
+# --- INTERFACE STREAMLIT ---
 aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
+
 with aba1:
-    # 1. Identificando as empresas únicas e calculando a divisão
     empresas_unicas = dados_agrupado['Empresa'].unique()
     qtd_empresas = len(empresas_unicas)
-    
-    # O cálculo (qtd + 1) // 2 garante que se for ímpar (ex: 5), a col1 fica com 3 e col2 com 2.
     meio = (qtd_empresas + 1) // 2 
-    
     lista_empresas_col1 = empresas_unicas[:meio]
     lista_empresas_col2 = empresas_unicas[meio:]
 
     col1, col2 = st.columns(2)
-
-    # --- COLUNA 1 ---
     with col1:
-        # Mantive sua métrica original, mas talvez você queira ajustar o texto
         st.metric(label='Total de Clientes', value=len(lista_empresas_col1) + len(lista_empresas_col2))
-        
-        st.write("---") # Uma linha separadora visual
-        
+        st.write("---")
         for empresa_atual in lista_empresas_col1:
-            # Filtra apenas para pegar o total daquela empresa específica
             total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
-            
-            # Usei markdown (**) para destacar o nome da empresa
             st.write(f'🏢 **{empresa_atual}**') 
             st.write(f'Apólices: {total_apolices}')
-            st.write("") # Espaço vazio entre empresas
+            st.write("") 
 
-    # --- COLUNA 2 ---
     with col2:
         st.metric(label='Total de Apólices', value=dados_agrupado['count'].sum())
-        
         st.write("---")
-        
         for empresa_atual in lista_empresas_col2:
             total_apolices = dados_agrupado[dados_agrupado['Empresa'] == empresa_atual]['count'].sum()
-            
             st.write(f'🏢 **{empresa_atual}**')
             st.write(f'Apólices: {total_apolices}')
             st.write("")
 
-    # O gráfico continua aparecendo abaixo das colunas
     st.markdown("---")
     st.plotly_chart(fig, use_container_width=True)
+
 
 with aba2:
     st.write("Clientes que estão em negociação")
