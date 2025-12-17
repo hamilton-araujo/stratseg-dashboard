@@ -96,61 +96,60 @@ aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em neg
 aba1, aba2, aba3 = st.tabs(["Clientes para Contato", "Clientes que estão em negociação", "Visão Geral"])
 
 with aba1:
-    # 1. Identificando as empresas únicas a partir dos dados filtrados
+    # 1. Definindo a paleta de cores (a mesma do Plotly T10)
+    cores_plotly = px.colors.qualitative.T10
     empresas_unicas = dados['Empresa'].unique()
-    qtd_empresas = len(empresas_unicas)
     
-    # Divisão para as duas colunas
+    # Criamos um dicionário vinculando cada empresa a uma cor da paleta
+    mapa_cores = {empresa: cores_plotly[i % len(cores_plotly)] for i, empresa in enumerate(empresas_unicas)}
+
+    # 2. Divisão de colunas
+    qtd_empresas = len(empresas_unicas)
     meio = (qtd_empresas + 1) // 2 
-    lista_empresas_col1 = empresas_unicas[:meio]
-    lista_empresas_col2 = empresas_unicas[meio:]
+    lista_col1 = empresas_unicas[:meio]
+    lista_col2 = empresas_unicas[meio:]
 
     col1, col2 = st.columns(2)
+
+    # Função auxiliar para renderizar os expanders coloridos
+    def renderizar_lista_empresas(lista):
+        for empresa_atual in lista:
+            cor = mapa_cores[empresa_atual]
+            df_detalhe = dados[dados['Empresa'] == empresa_atual].copy()
+            total = len(df_detalhe)
+            
+            # Customização visual: Borda colorida e título com a cor da empresa
+            st.markdown(f"""
+                <div style="border-left: 5px solid {cor}; padding-left: 15px; margin-top: 20px; margin-bottom: 5px;">
+                    <span style="color: {cor}; font-size: 20px; font-weight: bold;">🏢 {empresa_atual}</span>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # O expander fica logo abaixo do título colorido
+            with st.expander(f"Ver {total} apólice(s)"):
+                df_detalhe['Fim Apólice'] = df_detalhe['Fim Apólice'].dt.strftime('%d/%m/%Y')
+                # Exibimos a tabela com as colunas solicitadas
+                st.dataframe(
+                    df_detalhe[['Apólice', 'Seguro', 'Fim Apólice']].rename(columns={'Fim Apólice': 'Vencimento'}),
+                    hide_index=True,
+                    use_container_width=True
+                )
 
     # --- COLUNA 1 ---
     with col1:
         st.metric(label='Total de Clientes', value=qtd_empresas)
         st.write("---")
-        
-        for empresa_atual in lista_empresas_col1:
-            # Filtramos os dados brutos para esta empresa específica
-            df_detalhe = dados[dados['Empresa'] == empresa_atual].copy()
-            total_apolices = len(df_detalhe)
-            
-            # Criamos o expander com o nome da empresa e a contagem
-            with st.expander(f"🏢 **{empresa_atual}** ({total_apolices} apólices)"):
-                # Formatamos a data para exibição na tabela
-                df_detalhe['Fim Apólice'] = df_detalhe['Fim Apólice'].dt.strftime('%d/%m/%Y')
-                
-                # Exibimos apenas as colunas solicitadas
-                st.dataframe(
-                    df_detalhe[['Apólice', 'Seguro', 'Fim Apólice']].rename(columns={'Fim Apólice': 'Vencimento'}),
-                    hide_index=True,
-                    use_container_width=True
-                )
+        renderizar_lista_empresas(lista_col1)
 
     # --- COLUNA 2 ---
     with col2:
         st.metric(label='Total de Apólices', value=len(dados))
         st.write("---")
-        
-        for empresa_atual in lista_empresas_col2:
-            df_detalhe = dados[dados['Empresa'] == empresa_atual].copy()
-            total_apolices = len(df_detalhe)
-            
-            with st.expander(f"🏢 **{empresa_atual}** ({total_apolices} apólices)"):
-                df_detalhe['Fim Apólice'] = df_detalhe['Fim Apólice'].dt.strftime('%d/%m/%Y')
-                
-                st.dataframe(
-                    df_detalhe[['Apólice', 'Seguro', 'Fim Apólice']].rename(columns={'Fim Apólice': 'Vencimento'}),
-                    hide_index=True,
-                    use_container_width=True
-                )
+        renderizar_lista_empresas(lista_col2)
 
-    # O gráfico continua aparecendo abaixo das colunas
     st.markdown("---")
     st.plotly_chart(fig, use_container_width=True)
-
+    
 with aba2:
     st.write("Clientes que estão em negociação")
     col1, col2, col3 = st.columns([1.5, 1, 1]) # Larguras relativas: 1, 2, 1
