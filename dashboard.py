@@ -52,7 +52,7 @@ dados_agrupado = dados_agrupado.reset_index()
 
 import plotly.express as px
 
-dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa'].dt.strftime('%d/%m/%Y')
+dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
 dados_agrupado['Apólices'] = dados_agrupado['count']
 dados_agrupado['Fim Apólice'] = dados_agrupado['Fim Apólice'].dt.strftime('%d/%m/%Y')
 
