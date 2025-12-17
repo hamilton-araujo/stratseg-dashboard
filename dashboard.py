@@ -52,8 +52,8 @@ dados_agrupado = dados_agrupado.reset_index()
 
 import plotly.express as px
 
-dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa']
-dados_agrupado['Apólices'] = dados_agrupado['count'].dr.strftime('%d/%m/%Y')
+dados_agrupado["Avisar Empresa"] = dados_agrupado['Avisar Empresa'].dt.strftime('%d/%m/%Y')
+dados_agrupado['Apólices'] = dados_agrupado['count']
 dados_agrupado['Fim Apólice'] = dados_agrupado['Fim Apólice'].dt.strftime('%d/%m/%Y')
 
 fig = px.bar(dados_agrupado, x="Avisar Empresa", y="Apólices", hover_data=['Fim Apólice'], color="Empresa", color_discrete_sequence=px.colors.qualitative.T10, labels={"Avisar Empresa": "Data de Aviso", "Apólices": "Número de Apólices", "Fim Apólice": "Data de Fim da Apólice"}, title="Número de Apólices por Data de Aviso e Empresa")
