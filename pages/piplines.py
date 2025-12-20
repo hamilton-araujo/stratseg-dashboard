@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import openpyxl
 
 # Carregamento dos dados
 # Usamos o dicionário para facilitar a iteração depois
