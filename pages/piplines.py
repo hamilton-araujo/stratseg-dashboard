@@ -3,7 +3,7 @@ import streamlit as st
 
 # Carregamento dos dados
 # Usamos o dicionário para facilitar a iteração depois
-dfs = pd.read_excel('Bases BIDS a esquentar - Copia.xlsx', sheet_name=None)
+dfs = pd.read_excel('pages/Bases BIDS a esquentar - Copia.xlsx', sheet_name=None)
 
 # Mapeamento amigável dos nomes das abas
 mapeamento_nomes = {
